@@ -1,1 +1,1 @@
-This is Garage Sale Web Application Buy Sell Swap Donate
+This is Garage Sale Web Applicationn
