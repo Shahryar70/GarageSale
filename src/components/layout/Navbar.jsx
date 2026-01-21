@@ -1,14 +1,17 @@
+// src/components/layout/Navbar.jsx
+import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-
 export default function Navbar() {
-const { logout, user } = useAuth();
+  const { logout } = useAuth();
 
-
-return (
-<div className="bg-gray-900 text-white p-4 flex justify-between">
-<span>My App</span>
-{user && <button onClick={logout}>Logout</button>}
-</div>
-);
+  return (
+    <nav className="flex justify-between items-center p-4 bg-white shadow">
+      <Link to="/" className="font-bold text-lg">Sustainify</Link>
+      <div className="space-x-4">
+        <Link to="/dashboard">Dashboard</Link>
+        <button onClick={logout} className="text-red-500">Logout</button>
+      </div>
+    </nav>
+  );
 }

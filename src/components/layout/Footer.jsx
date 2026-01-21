@@ -1,7 +1,8 @@
+// src/components/layout/Footer.jsx
 export default function Footer() {
-return (
-<footer className="bg-gray-900 text-white p-2 text-center">
-© 2026
-</footer>
-);
+  return (
+    <footer className="p-4 text-center text-sm text-gray-500">
+      © 2026 Sustainify
+    </footer>
+  );
 }

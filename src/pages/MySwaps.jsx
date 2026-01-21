@@ -1,55 +1,26 @@
+// src/pages/MySwaps.jsx
 import { useEffect, useState } from "react";
-import api from "../services/api";
+import { getMySwaps } from "../services/swap.service";
 import SwapCard from "../components/swap/SwapCard";
 
-
 export default function MySwaps() {
-const [swaps, setSwaps] = useState([]);
-const [filter, setFilter] = useState("all");
-const [loading, setLoading] = useState(true);
+  const [swaps, setSwaps] = useState([]);
 
+  const load = () => {
+    getMySwaps().then((res) => setSwaps(res.data || []));
+  };
 
-const fetchSwaps = async () => {
-const { data } = await api.get("/swaps");
-setSwaps(data);
-setLoading(false);
-};
+  useEffect(load, []);
 
+  return (
+    <div className="p-6">
+      <h1 className="text-xl font-semibold mb-4">My Swaps</h1>
 
-useEffect(() => {
-fetchSwaps();
-}, []);
-
-
-const filtered = filter === "all" ? swaps : swaps.filter(s => s.status === filter);
-
-
-if (loading) return <div className="p-6">Loading swaps...</div>;
-
-
-return (
-<div className="p-6">
-<h1 className="text-2xl font-bold mb-4">My Swaps</h1>
-
-
-<div className="flex gap-2 mb-4 flex-wrap">
-{["all","pending","accepted","rejected","completed"].map(s => (
-<button
-key={s}
-onClick={() => setFilter(s)}
-className={`px-3 py-1 rounded border ${filter===s?"bg-green-600 text-white":"bg-white"}`}
->
-{s.toUpperCase()}
-</button>
-))}
-</div>
-
-
-<div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-{filtered.map(swap => (
-<SwapCard key={swap.id} swap={swap} onUpdate={fetchSwaps} />
-))}
-</div>
-</div>
-);
+      <div className="grid md:grid-cols-2 gap-4">
+        {swaps.map((s) => (
+          <SwapCard key={s.id} swap={s} refresh={load} />
+        ))}
+      </div>
+    </div>
+  );
 }

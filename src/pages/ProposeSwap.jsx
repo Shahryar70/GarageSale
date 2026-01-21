@@ -1,49 +1,44 @@
-import { useEffect, useState } from "react";
-import api from "../services/api";
+// src/pages/ProposeSwap.jsx
+import { useState } from "react";
+import { proposeSwap } from "../services/swap.service";
 import { useNavigate } from "react-router-dom";
 
-
 export default function ProposeSwap() {
-const [myItems, setMyItems] = useState([]);
-const [targetItems, setTargetItems] = useState([]);
-const [myItemId, setMyItemId] = useState("");
-const [targetItemId, setTargetItemId] = useState("");
-const navigate = useNavigate();
+  const [myItem, setMyItem] = useState("");
+  const [targetItem, setTargetItem] = useState("");
+  const navigate = useNavigate();
 
+  const submit = async (e) => {
+    e.preventDefault();
+    await proposeSwap({ myItem, targetItem });
+    navigate("/swaps");
+  };
 
-useEffect(() => {
-api.get("/items/mine").then(r => setMyItems(r.data));
-api.get("/items").then(r => setTargetItems(r.data));
-}, []);
+  return (
+    <div className="p-6 max-w-md mx-auto">
+      <h1 className="text-xl font-semibold mb-4">Propose Swap</h1>
 
+      <form onSubmit={submit} className="space-y-4">
+        <input
+          className="w-full border p-2 rounded"
+          placeholder="Your item"
+          value={myItem}
+          onChange={(e) => setMyItem(e.target.value)}
+          required
+        />
 
-const submit = async (e) => {
-e.preventDefault();
-await api.post("/swaps", { myItemId, targetItemId });
-navigate("/swaps");
-};
+        <input
+          className="w-full border p-2 rounded"
+          placeholder="Target item"
+          value={targetItem}
+          onChange={(e) => setTargetItem(e.target.value)}
+          required
+        />
 
-
-return (
-<div className="max-w-xl mx-auto p-6">
-<h1 className="text-xl font-bold mb-4">Propose Swap</h1>
-
-
-<form onSubmit={submit} className="space-y-4">
-<select required className="w-full border p-2 rounded" value={myItemId} onChange={e=>setMyItemId(e.target.value)}>
-<option value="">Select your item</option>
-{myItems.map(i=> <option key={i.id} value={i.id}>{i.name}</option>)}
-</select>
-
-
-<select required className="w-full border p-2 rounded" value={targetItemId} onChange={e=>setTargetItemId(e.target.value)}>
-<option value="">Select target item</option>
-{targetItems.map(i=> <option key={i.id} value={i.id}>{i.name}</option>)}
-</select>
-
-
-<button className="bg-green-600 text-white px-4 py-2 rounded w-full">Submit</button>
-</form>
-</div>
-);
+        <button className="w-full bg-green-600 text-white py-2 rounded">
+          Submit Swap
+        </button>
+      </form>
+    </div>
+  );
 }
