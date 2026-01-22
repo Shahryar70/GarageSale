@@ -21,6 +21,15 @@ import SwapSuggestions from "./components/ai/SwapSuggestions";
 import PersonalizedFeed from "./components/ai/PersonalizedFeed";
 import UserAnalytics from "./components/analytics/UserAnalytics";
 import SystemAnalytics from "./components/analytics/SystemAnalytics";
+import Register from "./pages/Register";
+import PrivateRoute from "./components/PrivateRoute";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import BrowseItems from "./pages/BrowseItems";
+import ItemDetails from "./pages/ItemDetails";
+import AddItem from "./pages/AddItem";
+import EditItem from "./pages/EditItem";
+import Messages from "./pages/Messages";
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
@@ -35,21 +44,51 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register/>}/>
+                  {/* Protected Routes */}
+                 <Route path="/dashboard" element={
+              <PrivateRoute>
+                <Dashboard />
+              </PrivateRoute>
+            } />
+  <Route path="/profile" element={
+                <PrivateRoute>
+                  <Profile />
+                </PrivateRoute>
+              } />
+              <Route path="/settings" element={
+                <PrivateRoute>
+                  <Settings />
+                </PrivateRoute>
+              } />
+              <Route path="/edit-item/:id" element={<PrivateRoute>
+                <EditItem/>
+              </PrivateRoute>}/>
+<Route path="/browse-items" element={<BrowseItems/>}/>
+<Route path="/items/:id" element={<ItemDetails/>}/>
+<Route 
+  path="/add-item" 
+  element={
+    <PrivateRoute>
+      <AddItem />
+    </PrivateRoute>
+  } 
+/>
+  <Route path="/messages" element={
+              <PrivateRoute>
+                <Messages />
+              </PrivateRoute>
+            } />
+            <Route path="/conversation/:userId" element={
+              <PrivateRoute>
+                <Conversation />
+              </PrivateRoute>
+            } />
 
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
 <Route path="/swaps" element={<MySwaps/>}/>
 <Route path="/swaps/new" element={<ProposeSwap/>}/>
 <Route path="/swaps/:id" element={<SwapDetails/>}/>
-<Route path="/messages" element={<Inbox/>}>
-<Route path=":id" element={<Conversation/>}/>
-</Route>
+
 <Route path="/admin" element={<AdminDashboard />} />
 <Route path="/admin/users" element={<Users />} />
 <Route path="/admin/items" element={<Items />} />

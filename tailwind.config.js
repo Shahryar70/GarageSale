@@ -4,7 +4,13 @@ module.exports = {
  "./src/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      lineClamp: {
+        1: '1',
+        2: '2',
+        3: '3',
+      }
+    },
   },
   plugins: [
     require('daisyui'), // Add daisyUI plugin here
