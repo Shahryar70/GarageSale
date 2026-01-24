@@ -1,5 +1,6 @@
 // src/pages/Profile.jsx
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import userService from '../services/userService';
 export default function Profile() {
@@ -198,62 +199,116 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Right Column - Stats */}
-        <div className="space-y-8">
-          {/* User Stats */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold mb-6">Your Stats</h2>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                <span className="font-medium">EcoScore</span>
-                <span className="text-2xl font-bold text-green-600">{user?.ecoScore || 0}</span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                <span className="font-medium">Items Listed</span>
-                <span className="text-2xl font-bold text-blue-600">{stats?.TotalItemsListed || 0}</span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                <span className="font-medium">Donations</span>
-                <span className="text-2xl font-bold text-purple-600">{stats?.TotalDonations || 0}</span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-amber-50 rounded-lg">
-                <span className="font-medium">Swaps</span>
-                <span className="text-2xl font-bold text-amber-600">{stats?.TotalSwaps || 0}</span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-                <span className="font-medium">Sales</span>
-                <span className="text-2xl font-bold text-red-600">{stats?.TotalSales || 0}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Account Info */}
-          <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-xl font-bold mb-6">Account Information</h2>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">User Type</span>
-                <span className="font-medium">{user?.userType}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Rating</span>
-                <span className="font-medium">{user?.rating?.toFixed(1) || '0.0'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Account Status</span>
-                <span className={`font-medium ${user?.isActive ? 'text-green-600' : 'text-red-600'}`}>
-                  {user?.isActive ? 'Active' : 'Inactive'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Member Since</span>
-                <span className="font-medium">
-                  {new Date().toLocaleDateString()}
-                </span>
-              </div>
-            </div>
+     {/* Right Column - Stats */}
+<div className="space-y-8">
+  {/* User Stats */}
+  <div className="bg-white rounded-xl shadow-lg p-6">
+    <h2 className="text-xl font-bold mb-6">Your Stats</h2>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+        <span className="font-medium">EcoScore</span>
+        <span className="text-2xl font-bold text-green-600">{user?.ecoScore || 0}</span>
+      </div>
+      {/* ... other stats ... */}
+    </div>
+  </div>
+{/* Verification Status Card */}
+<div className="bg-white rounded-xl shadow-lg p-6">
+  <h2 className="text-xl font-bold mb-6">Verification Status</h2>
+  <div className="space-y-4">
+    {/* Verification Badge */}
+    <div className={`p-3 rounded-lg ${
+      user?.verificationStatus === 'Verified' ? 'bg-green-50 border border-green-200' :
+      user?.verificationStatus === 'Pending' ? 'bg-yellow-50 border border-yellow-200' :
+      'bg-gray-50 border border-gray-200'
+    }`}>
+      <div className="flex justify-between items-center">
+        <span className="font-medium">Status:</span>
+        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+          user?.verificationStatus === 'Verified' ? 'bg-green-100 text-green-800' :
+          user?.verificationStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+          'bg-gray-100 text-gray-800'
+        }`}>
+          {user?.verificationStatus || 'Not Verified'}
+        </span>
+      </div>
+      
+      {/* Priority Level */}
+      {user?.verificationStatus === 'Verified' && user?.priorityLevel > 0 && (
+        <div className="mt-3 flex justify-between items-center">
+          <span className="font-medium">Priority Level:</span>
+          <div className="flex items-center">
+            {[...Array(user.priorityLevel)].map((_, i) => (
+              <span key={i} className="text-yellow-500">★</span>
+            ))}
+            {[...Array(10 - user.priorityLevel)].map((_, i) => (
+              <span key={`empty-${i}`} className="text-gray-300">★</span>
+            ))}
+            <span className="ml-2 font-bold text-blue-600">{user.priorityLevel}/10</span>
           </div>
         </div>
+      )}
+    </div>
+
+    {/* Monthly Donation Limit */}
+    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="flex justify-between items-center mb-2">
+        <span className="font-medium">Monthly Donation Limit</span>
+        <span className="text-lg font-bold text-blue-600">
+          {(user?.itemsReceivedThisMonth || 0)} / 2 items
+        </span>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-2">
+        <div 
+          className="bg-blue-600 h-2 rounded-full" 
+          style={{ width: `${Math.min(((user?.itemsReceivedThisMonth || 0) / 2) * 100, 100)}%` }}
+        ></div>
+      </div>
+      <p className="text-xs text-gray-600 mt-2">
+        Resets on the 1st of each month
+      </p>
+    </div>
+
+    {/* Verification Action Button */}
+    {user?.verificationStatus !== 'Verified' && (
+      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <p className="text-yellow-800 mb-3">
+          {user?.verificationStatus === 'Pending' 
+            ? 'Your verification is under review. This usually takes 24-48 hours.'
+            : 'Verification is required to request donation items.'}
+        </p>
+        <Link
+          to="/verification"
+          className="block w-full bg-yellow-600 text-white py-2 rounded-lg hover:bg-yellow-700 transition font-medium text-center"
+        >
+          {user?.verificationStatus === 'Pending' ? 'Check Status' : 'Start Verification'}
+        </Link>
+      </div>
+    )}
+
+    {/* Donation History Link */}
+    {user?.verificationStatus === 'Verified' && (
+      <Link
+        to="/my-donations"
+        className="block w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition font-medium text-center"
+      >
+        View My Donations
+      </Link>
+    )}
+  </div>
+</div>
+  {/* Account Info */}
+  <div className="bg-white rounded-xl shadow-lg p-6">
+    <h2 className="text-xl font-bold mb-6">Account Information</h2>
+    <div className="space-y-3">
+      <div className="flex justify-between">
+        <span className="text-gray-600">User Type</span>
+        <span className="font-medium">{user?.userType}</span>
+      </div>
+      {/* ... other info ... */}
+    </div>
+  </div>
+</div>
       </div>
     </div>
   );

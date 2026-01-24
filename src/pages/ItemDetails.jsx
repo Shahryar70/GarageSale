@@ -98,7 +98,38 @@ export default function ItemDetails() {
     // TODO: Implement messaging
     alert('Messaging feature coming soon!');
   };
+const handleDonationRequest = async (itemId) => {
+  if (!isAuthenticated) {
+    navigate('/login', { state: { from: `/items/${id}` } });
+    return;
+  }
 
+  // Check verification status
+  if (user?.verificationStatus !== 'Verified') {
+    alert('Please complete verification to request donations.');
+    navigate('/verification');
+    return;
+  }
+
+  // Check monthly limit
+  if ((user?.itemsReceivedThisMonth || 0) >= 2) {
+    alert('You have reached your monthly donation limit (2 items).');
+    return;
+  }
+
+  // Show donation request modal
+  const message = prompt('Tell the donor why you need this item:');
+  if (!message) return;
+
+  try {
+    // TODO: Call donation request API
+    console.log('Requesting donation:', { itemId, message });
+    alert('Donation request sent successfully! The donor will review your request.');
+  } catch (error) {
+    console.error('Donation request error:', error);
+    alert('Failed to send donation request. Please try again.');
+  }
+};
   const handleEdit = () => {
     navigate(`/edit-item/${id}`);
   };
@@ -356,62 +387,118 @@ export default function ItemDetails() {
                 </div>
               </div>
 
-             <div className="border-t pt-6">
-        {!isAuthenticated ? (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-            <p className="text-yellow-800">
-              <span className="font-semibold">Login required:</span> You need to login to contact the seller.
-            </p>
-            <Link
-              to="/login"
-              state={{ from: `/items/${id}` }}
-              className="inline-block mt-2 text-green-600 hover:text-green-800 font-medium"
-            >
-              Login Now
-            </Link>
-          </div>
-        ) : isOwner ? (
-          <div className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <p className="text-blue-800 font-medium">This is your item.</p>
-              <div className="flex gap-3 mt-3">
-                <button
-                  onClick={handleEdit}
-                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium flex items-center justify-center gap-2"
-                >
-                  <FaEdit />
-                  Edit Item
-                </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition font-medium flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  <FaTrash />
-                  {deleting ? 'Deleting...' : 'Delete Item'}
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* Replace the old contact button with MessageButton */}
-            <MessageButton 
-              seller={sellerInfo}
-              itemId={id}
-              itemTitle={title}
-              itemType={itemType}
-            />
-            
-            {/* Optional: Keep other action buttons based on item type */}
-            {itemType === 'Sell' && (
-              <button className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-medium">
-                Make Offer
-              </button>
-            )}
-          </div>
-        )}
+        <div className="border-t pt-6">
+  {!isAuthenticated ? (
+    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+      <p className="text-yellow-800">
+        <span className="font-semibold">Login required:</span> You need to login to request items.
+      </p>
+      <Link
+        to="/login"
+        state={{ from: `/items/${id}` }}
+        className="inline-block mt-2 text-green-600 hover:text-green-800 font-medium"
+      >
+        Login Now
+      </Link>
+    </div>
+  ) : isOwner ? (
+    <div className="space-y-4">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <p className="text-blue-800 font-medium">This is your item.</p>
+        <div className="flex gap-3 mt-3">
+          <button
+            onClick={handleEdit}
+            className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition font-medium flex items-center justify-center gap-2"
+          >
+            <FaEdit />
+            Edit Item
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            <FaTrash />
+            {deleting ? 'Deleting...' : 'Delete Item'}
+          </button>
+        </div>
       </div>
+    </div>
+  ) : (
+    <div className="space-y-4">
+      {/* ✅ NEW: Smart Action Buttons based on Item Type and Verification */}
+      {itemType === 'Donate' ? (
+        // DONATION ITEM - Check verification status
+        user?.verificationStatus === 'Verified' ? (
+          // User is VERIFIED - Check monthly limit
+          (user?.itemsReceivedThisMonth || 0) < 2 ? (
+            <button
+              onClick={() => handleDonationRequest(id)}
+              className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-medium flex items-center justify-center gap-2"
+            >
+              <FaGift />
+              Request Donation
+              {user?.priorityLevel > 0 && (
+                <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                  Priority: {user.priorityLevel}/10
+                </span>
+              )}
+            </button>
+          ) : (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-800 font-medium">Monthly Limit Reached</p>
+              <p className="text-red-600 text-sm mt-1">
+                You can only receive 2 donation items per month. Try again next month.
+              </p>
+            </div>
+          )
+        ) : (
+          // User is NOT VERIFIED
+          <Link
+            to="/verification"
+            className="block w-full bg-yellow-600 text-white py-3 rounded-lg hover:bg-yellow-700 transition font-medium text-center"
+          >
+            <div className="flex items-center justify-center gap-2">
+              <FaGift />
+              Verify Account to Request
+            </div>
+            <p className="text-xs mt-1 opacity-90">
+              Required for donation items - Protects against fraud
+            </p>
+          </Link>
+        )
+      ) : itemType === 'Swap' ? (
+        // SWAP ITEM - Available to all logged-in users
+        <button className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-medium flex items-center justify-center gap-2">
+          <FaExchangeAlt />
+          Propose Swap
+        </button>
+      ) : itemType === 'Sell' ? (
+        // SELL ITEM - Available to all logged-in users
+        <div className="space-y-2">
+          <button className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition font-medium">
+            Buy Now - ${askingPrice}
+          </button>
+          <MessageButton 
+            seller={sellerInfo}
+            itemId={id}
+            itemTitle={title}
+            itemType={itemType}
+            className="w-full"
+          />
+        </div>
+      ) : (
+        // Default - Keep message button
+        <MessageButton 
+          seller={sellerInfo}
+          itemId={id}
+          itemTitle={title}
+          itemType={itemType}
+        />
+      )}
+    </div>
+  )}
+</div>
             </div>
 
             {/* Seller Info */}

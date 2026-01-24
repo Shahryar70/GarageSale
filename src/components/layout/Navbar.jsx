@@ -305,6 +305,38 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+
+{displayUser?.displayUserType === "Admin" && (
+  <NavLink to="/admin" className="block px-3 py-2 text-sm hover:bg-gray-100 rounded-md text-red-600">
+    Admin Panel
+  </NavLink>
+)}
+
+{/* ADD THIS SECTION: */}
+{user?.verificationStatus && (
+  <div className="border-t pt-2 mt-2">
+    <div className="px-3 py-2">
+      <div className="flex items-center justify-between text-xs">
+        <span className="font-medium">Verification:</span>
+        <span className={`px-2 py-1 rounded-full ${
+          user.verificationStatus === 'Verified' ? 'bg-green-100 text-green-800' :
+          user.verificationStatus === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+          'bg-gray-100 text-gray-800'
+        }`}>
+          {user.verificationStatus}
+        </span>
+      </div>
+      {user.priorityLevel > 0 && (
+        <div className="flex items-center justify-between text-xs mt-1">
+          <span className="font-medium">Priority Level:</span>
+          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+            {user.priorityLevel}/10
+          </span>
+        </div>
+      )}
+    </div>
+  </div>
+)}
     </div>
   );
 

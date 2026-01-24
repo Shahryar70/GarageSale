@@ -1,4 +1,4 @@
-// src/context/AuthContext.jsx - UPDATED
+// src/context/AuthContext.jsx - UPDATED VERSION WITH ROLE-BASED REDIRECTION
 import { createContext, useState, useContext, useEffect } from 'react';
 import { authService } from '../services/api';
 
@@ -20,7 +20,18 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('token');
       if (token) {
         const userData = await authService.getCurrentUser();
-        setUser(userData);
+        // Add role to user data if not present
+        const userWithRole = {
+          ...userData,
+          role: userData.role || userData.Role || 'user', // Handle both uppercase and lowercase
+          verificationStatus: userData.verificationStatus || 'Unverified',
+          priorityLevel: userData.priorityLevel || 0,
+          itemsReceivedThisMonth: userData.itemsReceivedThisMonth || 0,
+          cnicNicop: userData.cnicNicop || null,
+          isSingleMother: userData.isSingleMother || false,
+          isDisabled: userData.isDisabled || false
+        };
+        setUser(userWithRole);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -39,19 +50,27 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.register(userData);
       console.log('📝 AuthContext Register Response:', response);
       
-      // Handle different response formats
       if (response.success || response.token) {
-        // Store token if provided
         if (response.token) {
           localStorage.setItem('token', response.token);
         }
         if (response.user) {
-          localStorage.setItem('user', JSON.stringify(response.user));
-          setUser(response.user);
+          // Add role to registered user
+          const userWithRole = {
+            ...response.user,
+            role: response.user.role || response.user.Role || 'user',
+            verificationStatus: response.user.verificationStatus || 'Unverified',
+            priorityLevel: response.user.priorityLevel || 0,
+            itemsReceivedThisMonth: response.user.itemsReceivedThisMonth || 0,
+            cnicNicop: response.user.cnicNicop || null,
+            isSingleMother: response.user.isSingleMother || false,
+            isDisabled: response.user.isDisabled || false
+          };
+          localStorage.setItem('user', JSON.stringify(userWithRole));
+          setUser(userWithRole);
         }
         return { success: true, data: response };
       } else {
-        // If we got here, registration worked but response format is unexpected
         console.log('Registration succeeded but response format unexpected:', response);
         return { 
           success: true, 
@@ -68,32 +87,57 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (credentials) => {
-    try {
-      setError(null);
-      console.log('🔑 AuthContext Login:', credentials);
-      
-      const response = await authService.login(credentials);
-      console.log('🔑 AuthContext Login Response:', response);
-      
-      // Handle both uppercase and lowercase success property
-      if (response.Success || response.success || response.token) {
-        // Update user state
-        const user = response.User || response.user;
-        if (user) {
-          setUser(user);
+const login = async (credentials) => {
+  try {
+    setError(null);
+    console.log('🔑 AuthContext Login:', credentials);
+    
+    const response = await authService.login(credentials);
+    console.log('🔑 AuthContext Login Response:', response);
+    
+    if (response.Success || response.success || response.token) {
+      const user = response.User || response.user || response.data?.user;
+      if (user) {
+        // Add role checking with better validation
+        const userRole = user.role || user.Role || user.roleType || 'user';
+        console.log('🔑 Detected user role:', userRole);
+        
+        const userWithVerification = {
+          ...user,
+          role: userRole,
+          verificationStatus: user.verificationStatus || 'Unverified',
+          priorityLevel: user.priorityLevel || 0,
+          itemsReceivedThisMonth: user.itemsReceivedThisMonth || 0,
+          cnicNicop: user.cnicNicop || null,
+          isSingleMother: user.isSingleMother || false,
+          isDisabled: user.isDisabled || false
+        };
+        
+        console.log('🔑 Final user object:', userWithVerification);
+        setUser(userWithVerification);
+        localStorage.setItem('user', JSON.stringify(userWithVerification));
+        
+        if (response.token || response.data?.token) {
+          const token = response.token || response.data.token;
+          localStorage.setItem('token', token);
         }
-        return { success: true, data: response };
-      } else {
-        throw new Error(response.Message || response.message || 'Login failed');
+        
+        return { 
+          success: true, 
+          user: userWithVerification, 
+          data: response 
+        };
       }
-    } catch (error) {
-      console.error('AuthContext Login Error:', error);
-      setError(error.message || 'Login failed');
-      return { success: false, error: error.message };
+      return { success: true, data: response };
+    } else {
+      throw new Error(response.Message || response.message || 'Login failed');
     }
-  };
-
+  } catch (error) {
+    console.error('AuthContext Login Error:', error);
+    setError(error.message || 'Login failed');
+    return { success: false, error: error.message };
+  }
+};
   const logout = () => {
     authService.logout();
     localStorage.removeItem('token');
@@ -101,18 +145,30 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  // 🔥 ADD THIS: isAuthenticated property
+  // Update User Function
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
+  // Helper function to check user role
+  const isAdmin = () => {
+    return user?.role === 'admin' || user?.Role === 'admin';
+  };
+
   const isAuthenticated = !!user;
 
   const value = {
     user,
     loading,
     error,
-    isAuthenticated, // 🔥 ADD THIS LINE
+    isAuthenticated,
+    isAdmin: isAdmin(), // Add isAdmin check
     register,
     login,
     logout,
     setError,
+    updateUser,
   };
 
   return (

@@ -2,9 +2,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useMessages } from '../../context/MessageContext';
-
 import { FaPaperPlane, FaSpinner, FaTimes } from 'react-icons/fa';
-
 export default function MessageButton({ seller, itemId, itemTitle, itemType }) {
   const { user } = useAuth();
   const { sendMessage } = useMessages();

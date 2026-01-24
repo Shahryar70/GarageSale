@@ -1,9 +1,8 @@
 // src/pages/Login.jsx
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaGoogle, FaFacebookF } from 'react-icons/fa';
-import { FcGoogle } from 'react-icons/fc';
+import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -17,7 +16,12 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || '/dashboard';
-
+useEffect(() => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (user && (user.role === 'admin' || user.Role === 'admin')) {
+    navigate('/admin/dashboard', { replace: true });
+  }
+}, [navigate]);
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -28,6 +32,7 @@ export default function Login() {
     if (error) setError(null);
   };
 
+// In Login.jsx - Update the handleSubmit function
 const handleSubmit = async (e) => {
   e.preventDefault();
   setLoading(true);
@@ -41,31 +46,45 @@ const handleSubmit = async (e) => {
   console.log('🔄 Login result:', result);
   
   if (result.success) {
-    console.log('✅ Login successful, redirecting to:', from);
-    navigate(from, { replace: true });
+    // Get user from result
+    const user = result.user || JSON.parse(localStorage.getItem('user'));
+    console.log('✅ Login successful, user:', user);
+    
+    // Check user role
+    const isAdmin = 
+      user?.role === 'admin' || 
+      user?.Role === 'admin' || 
+      user?.role === 'Admin' || 
+      user?.Role === 'Admin' ||
+      user?.userType === 'admin' ||
+      user?.UserType === 'admin' ||
+      user?.userType === 'Admin' ||
+      user?.UserType === 'Admin';
+    
+    let redirectPath;
+    
+    if (isAdmin) {
+      redirectPath = '/admin/dashboard';
+      console.log('🔄 Redirecting ADMIN to:', redirectPath);
+    } else {
+      // For regular users, check if 'from' path is safe
+      redirectPath = from || '/dashboard';
+      
+      // Prevent regular users from being redirected to admin routes
+      if (redirectPath.startsWith('/admin/')) {
+        redirectPath = '/dashboard';
+      }
+      
+      console.log('🔄 Redirecting USER to:', redirectPath);
+    }
+    
+    navigate(redirectPath, { replace: true });
   } else {
     console.log('❌ Login failed:', result.error);
     setError(result.error || 'Login failed');
   }
 };
-  const handleDemoLogin = async (role) => {
-    setLoading(true);
-    setError(null);
-    
-    const demoCredentials = {
-      donor: { email: 'donor@example.com', password: 'Demo@123' },
-      receiver: { email: 'receiver@example.com', password: 'Demo@123' },
-      admin: { email: 'admin@example.com', password: 'Admin@123' }
-    };
-    
-    const result = await login(demoCredentials[role]);
-    
-    setLoading(false);
-    
-    if (result.success) {
-      navigate('/dashboard');
-    }
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
@@ -129,42 +148,6 @@ const handleSubmit = async (e) => {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Sign In</h1>
               <p className="text-gray-600">Access your account to continue sharing sustainably</p>
             </div>
-
-            {/* Demo Login Buttons */}
-            <div className="mb-8">
-              <p className="text-sm text-gray-500 mb-3 text-center">Quick Demo Login:</p>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  onClick={() => handleDemoLogin('donor')}
-                  disabled={loading}
-                  className="bg-green-100 hover:bg-green-200 text-green-800 py-2 px-3 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                >
-                  As Donor
-                </button>
-                <button
-                  onClick={() => handleDemoLogin('receiver')}
-                  disabled={loading}
-                  className="bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 px-3 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                >
-                  As Receiver
-                </button>
-                <button
-                  onClick={() => handleDemoLogin('admin')}
-                  disabled={loading}
-                  className="bg-purple-100 hover:bg-purple-200 text-purple-800 py-2 px-3 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                >
-                  As Admin
-                </button>
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="flex items-center my-8">
-              <div className="flex-grow border-t border-gray-300"></div>
-              <div className="mx-4 text-gray-500">Or continue with</div>
-              <div className="flex-grow border-t border-gray-300"></div>
-            </div>
-
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
@@ -261,25 +244,7 @@ const handleSubmit = async (e) => {
               </button>
             </form>
 
-            {/* Social Login */}
-            <div className="mt-8 space-y-4">
-              <button
-                disabled={loading}
-                className="w-full border border-gray-300 hover:bg-gray-50 py-3 rounded-lg font-medium flex items-center justify-center gap-3 transition-colors disabled:opacity-50"
-              >
-                <FcGoogle className="text-xl" />
-                Continue with Google
-              </button>
-              
-              <button
-                disabled={loading}
-                className="w-full border border-gray-300 hover:bg-gray-50 py-3 rounded-lg font-medium flex items-center justify-center gap-3 transition-colors disabled:opacity-50"
-              >
-                <FaFacebookF className="text-blue-600 text-xl" />
-                Continue with Facebook
-              </button>
-            </div>
-
+        
             {/* Sign Up Link */}
             <div className="mt-8 text-center md:hidden">
               <p className="text-gray-600">
